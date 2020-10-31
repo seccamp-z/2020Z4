@@ -1,0 +1,155 @@
+---
+nodes:
+- name: R1
+  image: slankdev/frr
+  interfaces:
+  - { name: net0, type: direct, args: R2#net0 }
+  - { name: net1, type: direct, args: C1#net0 }
+  - { name: net2, type: direct, args: C2#net0 }
+  - { name: net3, type: direct, args: R3#net0 }
+  - { name: net4, type: direct, args: R4#net0 }
+- name: R2
+  image: slankdev/frr
+  interfaces:
+  - { name: net0, type: direct, args: R1#net0 }
+  - { name: net1, type: direct, args: C3#net0 }
+  - { name: net2, type: direct, args: C4#net0 }
+  - { name: net3, type: direct, args: R3#net1 }
+  - { name: net4, type: direct, args: R4#net1 }
+- name: R3
+  image: slankdev/frr
+  interfaces:
+  - { name: net0, type: direct, args: R1#net3 }
+  - { name: net1, type: direct, args: R2#net3 }
+- name: R4
+  image: slankdev/frr
+  interfaces:
+  - { name: net0, type: direct, args: R1#net4 }
+  - { name: net1, type: direct, args: R2#net4 }
+- name: C1
+  image: slankdev/frr
+  interfaces:
+  - { name: net0, type: direct, args: R1#net1 }
+- name: C2
+  image: slankdev/frr
+  interfaces:
+  - { name: net0, type: direct, args: R1#net2 }
+- name: C3
+  image: slankdev/frr
+  interfaces:
+  - { name: net0, type: direct, args: R2#net1 }
+- name: C4
+  image: slankdev/frr
+  interfaces:
+  - { name: net0, type: direct, args: R2#net2 }
+
+node_configs:
+- name: R1
+  cmds:
+  - cmd: ip addr add 10.255.1.1/24 dev net0
+  - cmd: ip addr add 10.1.0.1/24   dev net1
+  - cmd: ip addr add 10.2.0.1/24   dev net2
+  - cmd: ip addr add 10.255.2.1/24 dev net3
+  - cmd: ip addr add 10.255.4.1/24 dev net4
+
+  - cmd: /usr/lib/frr/frr start
+  - cmd: >-
+      vtysh -c 'conf t'
+      -c 'router bgp 1'
+      -c ' bgp router-id 1.1.1.1'
+      -c ' neighbor 10.255.1.2 remote-as 2'
+      -c ' neighbor 10.255.2.2 remote-as 3'
+      -c ' neighbor 10.255.4.2 remote-as 4'
+      -c '!'
+      -c ' address-family ipv4 unicast'
+      -c '  network 10.1.0.0/24'
+      -c '  network 10.2.0.0/24'
+      -c ' exit-address-family'
+
+- name: R2
+  cmds:
+  - cmd: ip addr add 10.255.1.2/24 dev net0
+  - cmd: ip addr add 10.3.0.1/24   dev net1
+  - cmd: ip addr add 10.4.0.1/24   dev net2
+  - cmd: ip addr add 10.255.3.1/24 dev net3
+  - cmd: ip addr add 10.255.5.1/24 dev net4
+
+  - cmd: /usr/lib/frr/frr start
+  - cmd: >-
+      vtysh -c 'conf t'
+      -c 'router bgp 2'
+      -c ' bgp router-id 2.2.2.2'
+      -c ' neighbor 10.255.1.1 remote-as 1'
+      -c ' neighbor 10.255.3.2 remote-as 3'
+      -c ' neighbor 10.255.5.2 remote-as 4'
+      -c '!'
+      -c ' address-family ipv4 unicast'
+      -c '  network 10.3.0.0/24'
+      -c '  network 10.4.0.0/24'
+      -c ' exit-address-family'
+
+- name: R3
+  cmds:
+  - cmd: ip addr add 10.255.2.2/24 dev net0
+  - cmd: ip addr add 10.255.3.2/24 dev net1
+
+  - cmd: /usr/lib/frr/frr start
+  - cmd: >-
+      vtysh -c 'conf t'
+      -c 'router bgp 3'
+      -c ' bgp router-id 3.3.3.3'
+      -c ' neighbor 10.255.2.1 remote-as 1'
+      -c ' neighbor 10.255.3.1 remote-as 2'
+
+- name: R4
+  cmds:
+  - cmd: ip addr add 10.255.4.2/24 dev net0
+  - cmd: ip addr add 10.255.5.2/24 dev net1
+
+  - cmd: /usr/lib/frr/frr start
+  - cmd: >-
+      vtysh -c 'conf t'
+      -c 'router bgp 4'
+      -c ' bgp router-id 4.4.4.4'
+      -c ' neighbor 10.255.4.1 remote-as 1'
+      -c ' neighbor 10.255.5.1 remote-as 2'
+
+- name: C1
+  cmds:
+  - cmd: ip addr add 10.1.0.2/24 dev net0
+  - cmd: ip route add default via 10.1.0.1
+- name: C2
+  cmds:
+  - cmd: ip addr add 10.2.0.2/24 dev net0
+  - cmd: ip route add default via 10.2.0.1
+- name: C3
+  cmds:
+  - cmd: ip addr add 10.3.0.2/24 dev net0
+  - cmd: ip route add default via 10.3.0.1
+- name: C4
+  cmds:
+  - cmd: ip addr add 10.4.0.2/24 dev net0
+  - cmd: ip route add default via 10.4.0.1
+
+postinit:
+  cmds:
+  - cmd: mkdir -p /var/run/netns
+  - cmd: ln -s /proc/$(docker inspect R1 -f "{{.State.Pid}}")/ns/net /var/run/netns/R1
+  - cmd: ln -s /proc/$(docker inspect R2 -f "{{.State.Pid}}")/ns/net /var/run/netns/R2
+  - cmd: ln -s /proc/$(docker inspect R3 -f "{{.State.Pid}}")/ns/net /var/run/netns/R3
+  - cmd: ln -s /proc/$(docker inspect R4 -f "{{.State.Pid}}")/ns/net /var/run/netns/R4
+  - cmd: ln -s /proc/$(docker inspect C1 -f "{{.State.Pid}}")/ns/net /var/run/netns/C1
+  - cmd: ln -s /proc/$(docker inspect C2 -f "{{.State.Pid}}")/ns/net /var/run/netns/C2
+  - cmd: ln -s /proc/$(docker inspect C3 -f "{{.State.Pid}}")/ns/net /var/run/netns/C3
+  - cmd: ln -s /proc/$(docker inspect C4 -f "{{.State.Pid}}")/ns/net /var/run/netns/C4
+
+postfini:
+  cmds:
+  - cmd: rm -f /var/run/netns/R1 || true
+  - cmd: rm -f /var/run/netns/R2 || true
+  - cmd: rm -f /var/run/netns/R3 || true
+  - cmd: rm -f /var/run/netns/R4 || true
+  - cmd: rm -f /var/run/netns/C1 || true
+  - cmd: rm -f /var/run/netns/C2 || true
+  - cmd: rm -f /var/run/netns/C3 || true
+  - cmd: rm -f /var/run/netns/C4 || true
