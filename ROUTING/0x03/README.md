@@ -18,6 +18,11 @@
 
 c言語の以下の構造体に設定を保存します.
 ```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #define MAX_NEIGH 32
 #define MAX_NETWORK 256
 
@@ -31,13 +36,13 @@ struct neighbor {
   struct in_addr address;
 };
 
-struct network {
-  struct prefix prefix;
-};
-
 struct prefix {
   struct in_addr addr;
   uint32_t length;
+};
+
+struct network {
+  struct prefix prefix;
 };
 
 static inline void
@@ -46,21 +51,21 @@ print_confg(const struct config* cfg)
   char addr_str[256];
   inet_ntop(AF_INET, &cfg->router_id, addr_str, 256);
   printf("router-id: %s\n", addr_str);
-  
-  for (size_t i = 0; i < MAX_NEIGHBOR; i++) {
+
+  for (size_t i = 0; i < MAX_NEIGH; i++) {
     if (!cfg->networks[i])
       continue;
-    inet_ntop(AF_INET, &cfg->neighbors[i].address, addr_str, 256);
+    inet_ntop(AF_INET, &cfg->neighbors[i]->address, addr_str, 256);
     printf("neighbor[%d]: %s\n", i, addr_str);
   }
-  
+
   for (size_t i = 0; i < MAX_NETWORK; i++) {
     if (!cfg->networks[i])
       continue;
-    inet_ntop(AF_INET, &cfg->networks[i].prefix.addr, 
+    inet_ntop(AF_INET, &cfg->networks[i]->prefix.addr,
               addr_str, 256);
-    printf("network[%d]: %s\n", i, addr_str, 
-           cfg->networks[i].prefix.length);
+    printf("network[%d]: %s\n", i, addr_str,
+           cfg->networks[i]->prefix.length);
   }
 }
 ```
