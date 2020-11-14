@@ -123,3 +123,8 @@ TCPの接続後には, それぞれのconfig fileに設定された `networks` �
 type=UPDATE, path=[1.1.1.1], network={10.3.0.0/24}
 type=UPDATE, path=[1.1.1.1], network={10.4.0.0/24}
 ```
+
+## 課題: 経路の設定をしてみましょう
+
+上記で受け取った内容から実際にip routeの経路を設定しましょう.
+設定する部分は netliink exampleを参考に設定してみてください.
