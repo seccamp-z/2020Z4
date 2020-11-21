@@ -28,6 +28,9 @@ cn1が死んでもcn2,3でbackup pathが用意できる.
 cn2,3のpathとcn4,5の2つbackup pathが用意できる.
 ![](topo4.png)
 
+## topo5
+![](topo5.png)
+
 ## 演習: Static Routing Configuration
 
 上記topo2,3,4をnetnsで構成し, すべてstatic routeで通信できるようにしてみましょう.
