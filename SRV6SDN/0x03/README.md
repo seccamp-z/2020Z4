@@ -54,4 +54,23 @@ ip netns exec R2 ip route add $SRC/32 encap seg6 mode enca segs ${SID_LIST_DN},F
 
 これをpythonで開発どうぞ!
 
+### Next Step
+このsample codeを参考にして, yaml ファイルから直接読み出して, 上記のconfigをするようにしてください.
+```python
+#!/usr/bin/env python3
+import yaml
+import pprint
+
+config = {}
+with open("./chain.yml") as yml:
+    config = yaml.load(yml, Loader=yaml.SafeLoader)
+
+pprint.pprint(config)
+```
+
+以下のように実行できる様にしてください.
+```bash
+$ python3 add-policy.py test.yml
+```
+
 ## (3) 自動生成された設定から実際に通信内容が変更されるまでを動作確認してください
