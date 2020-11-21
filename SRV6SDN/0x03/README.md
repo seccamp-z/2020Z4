@@ -12,17 +12,17 @@ ip netns exec R2 ip rule add prio 100 to 10.1.0.11 table 100
 ip netns exec R2 ip route add 10.1.0.0/24 encap seg6 mode encap segs FF:2::1,FF:1::1,F1::10 dev net2
 ```
 
-結論は以下の標準化をする. (1) `C1 <-> C4 / F1,F2`, (2) `C1 <-> C5 / F2,F3,F1`
+結論は以下の標準化をする. (a) `C1 <-> C4 / F1,F2`, (a) `C1 <-> C5 / F2,F3,F1`
 ```
 rules:
 
-#(1)
+#(a)
 - id: 100
   target_src: 10.1.0.11 #C1
   target_dst: 10.2.0.14 #C4
   functions: [FF:1::1, FF:2::1]
   
-#(2)
+#(b)
 - id: 200
   target_src: 10.1.0.11 #C1
   target_dst: 10.2.0.15 #C5
@@ -33,13 +33,13 @@ rules:
 
 実際のRouting設定は以下のようになる.
 ```
-#(1)
+#(a)
 ip netns exec R1 ip rule add from 10.1.0.11 to 10.2.0.13 table 100
 ip netns exec R1 ip route add 10.2.0.13/32 encap seg6 mode enca segs FF:1::1,FF:2::1,F2::10 dev net2 table 100
 ip netns exec R2 ip rule add from 10.2.0.13 to 10.1.0.11 table 100
 ip netns exec R2 ip route add 10.1.0.11/32 encap seg6 mode enca segs FF:2::1,FF:1::1,F1::10 dev net2 table 100
 
-#(2)
+#(b)
 SRC=10.1.0.11
 DST=10.2.0.15
 TAB=200
