@@ -68,6 +68,12 @@ print_confg(const struct config* cfg)
            cfg->networks[i]->prefix.length);
   }
 }
+
+static inline int
+parse_config(struct config *cfg, const char *name)
+{
+  return -1;
+}
 ```
 
 上記の機能をlibraryのように使えるようにしよう.
@@ -79,7 +85,8 @@ print_confg(const struct config* cfg)
 
 int main()
 {
-  config cfg;
+  struct config cfg;
+  memset(&cfg, 0, sizeof(cfg));
   int ret = config_parse(&cfg, "./r1.json");
   if (ret < 0) {
     fprintf(stderr, "failed on config parser\n");
@@ -106,14 +113,15 @@ R2は`10.1.0.0/24`, `10.2.0.0/24` の情報をそれぞれ対向のRouterから�
 ```c
 #define MAX_HOP 32
 
-#define MSG_TYPE_UNSPEC
-#define MSG_TYPE_UPDATE
-#define MSG_TYPE_WITHDRAW
+#define MSG_TYPE_UNSPEC   0
+#define MSG_TYPE_UPDATE   1
+#define MSG_TYPE_WITHDRAW 2
 
 struct message {
   uint32_t type; // MSG_TYPE_XX
-  struct in_addr path[MAX_HOP];
   struct prefix networks[MAX_NETWORK];
+  struct in_addr path[MAX_HOP];
+  struct in_addr nexthop;
 };
 ```
 
@@ -125,8 +133,7 @@ TCPの接続後には, それぞれのconfig fileに設定された `networks` �
 
 (R1の場合)
 ```
-type=UPDATE, path=[1.1.1.1], network={10.3.0.0/24}
-type=UPDATE, path=[1.1.1.1], network={10.4.0.0/24}
+type=UPDATE, nexthop=[10.255.1.2], path=[1.1.1.1], network={10.3.0.0/24, 10.4.0.0/24}
 ```
 
 ## 課題: 経路の設定をしてみましょう
